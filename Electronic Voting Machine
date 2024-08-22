@@ -1,0 +1,87 @@
+import hashlib
+import random
+import uuid
+from collections import defaultdict
+
+class Voter:
+    def __init__(self, voter_id, pin):
+        self.voter_id = voter_id
+        self.pin = pin
+        self.has_voted = False
+
+class VotingSystem:
+    def __init__(self, candidates):
+        self.voters = {}
+        self.candidates = candidates
+        self.encrypted_votes = []
+        self.voting_record = defaultdict(int)
+
+    def register_voter(self, voter_id, pin):
+        self.voters[voter_id] = Voter(voter_id, pin)
+
+    def authenticate_voter(self, voter_id, pin):
+        voter = self.voters.get(voter_id)
+        if voter and voter.pin == pin:
+            return voter
+        return None
+
+    def encrypt_vote(self, vote):
+        salt = uuid.uuid4().hex
+        return hashlib.sha256(salt.encode() + vote.encode()).hexdigest()
+
+    def cast_vote(self, voter_id, pin, candidate):
+        voter = self.authenticate_voter(voter_id, pin)
+        if voter is None:
+            print("Invalid voter ID or PIN.")
+            return
+
+        if voter.has_voted:
+            print("You have already voted.")
+            return
+
+        if candidate not in self.candidates:
+            print("Invalid candidate.")
+            return
+
+        encrypted_vote = self.encrypt_vote(candidate)
+        self.encrypted_votes.append(encrypted_vote)
+        self.voting_record[candidate] += 1
+        voter.has_voted = True
+        print("Vote cast successfully and securely.")
+
+    def display_results(self):
+        print("\nElection Results:")
+        for candidate, votes in self.voting_record.items():
+            print(f"{candidate}: {votes} votes")
+
+    def run_voting(self):
+        while True:
+            print("\n1. Register Voter\n2. Cast Vote\n3. Display Results\n4. Exit")
+            choice = input("Enter your choice: ")
+
+            if choice == "1":
+                voter_id = input("Enter Voter ID: ")
+                pin = input("Enter PIN: ")
+                self.register_voter(voter_id, pin)
+                print("Voter registered successfully.")
+
+            elif choice == "2":
+                voter_id = input("Enter Voter ID: ")
+                pin = input("Enter PIN: ")
+                print("Candidates:", ", ".join(self.candidates))
+                candidate = input("Enter the candidate you want to vote for: ")
+                self.cast_vote(voter_id, pin, candidate)
+
+            elif choice == "3":
+                self.display_results()
+
+            elif choice == "4":
+                print("Exiting the voting system.")
+                break
+
+            else:
+                print("Invalid choice. Please try again.")
+candidates = ["Alice", "Bob", "Charlie"]
+voting_system = VotingSystem(candidates)
+voting_system.run_voting()
+Electronic Voting Machine
